@@ -41,39 +41,25 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response.body).encode())
 
     def do_GET(self):
-        response = Response()
-        response.code = 404
-        response.message = 'Not Found'
-
-        self._execute_controller(response)
+        self._execute_controller(self._get_default_response(404))
 
     def do_POST(self):
-        response = Response()
-        response.code = 501
-        response.message = 'Not Implemented'
-
-        self._execute_controller(response)
+        self._execute_controller(self._get_default_response(501))
 
     def do_PUT(self):
-        response = Response()
-        response.code = 501
-        response.message = 'Not Implemented'
-
-        self._execute_controller(response)
+        self._execute_controller(self._get_default_response(501))
 
     def do_PATCH(self):
-        response = Response()
-        response.code = 501
-        response.message = 'Not Implemented'
-
-        self._execute_controller(response)
+        self._execute_controller(self._get_default_response(501))
 
     def do_DELETE(self):
-        response = Response()
-        response.code = 501
-        response.message = 'Not Implemented'
+        self._execute_controller(self._get_default_response(501))
 
-        self._execute_controller(response)
+    def _get_default_response(self, code):
+        if code == 404:
+            return Response(404, 'Not Found')
+        elif code == 501:
+            return Response(501, 'Not Implemented')
 
     # def do_POST(self):
     # content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
@@ -89,9 +75,10 @@ class ServerHandler(BaseHTTPRequestHandler):
 
 
 class Response:
-    code = 200
-    message = 'OK'
-    body = None
+    def __init__(self, code=200, message='OK', body=None):
+        self.code = code
+        self.message = message
+        self.body = body
 
 
 class Request:
@@ -99,7 +86,7 @@ class Request:
         self.handler = handler
         self.uri = handler.path
 
-        self.uri_fragments = self._get_uri_fragments()
+        self.fragments = self._get_fragments()
         self.query_params = self._get_query_params()
         # self.headers = self._get_headers()
         # self.body = self._get_body()
@@ -115,26 +102,21 @@ class Request:
                         return route
         return None
 
-    def _get_uri_fragments(self):
+    def _get_fragments(self):
         # Remove query parameters
         uri = self.uri.split('?')[0]
 
         # Split and remove empty items
         uri_fragments = list(filter(lambda x: (x != ""), uri.split('/')))
 
-        fragments = list()
+        fragments = {}
 
         for i in range(len(uri_fragments)):
             if i % 2 == 0:
-                fragment_item = {
-                    'controller': uri_fragments[i],
-                    'value': None
-                }
+                fragments[uri_fragments[i]] = None
 
                 if len(uri_fragments) > i + 1:
-                    fragment_item['value'] = uri_fragments[i + 1]
-
-                fragments.append(fragment_item)
+                    fragments[uri_fragments[i]] = uri_fragments[i + 1]
 
         return fragments
 
